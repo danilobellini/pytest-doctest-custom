@@ -1,11 +1,11 @@
 """Py.test doctest custom plugin"""
 # By Danilo J. S. Bellini
-import sys, functools
+import sys, importlib, functools
 
 def printer(value):
     """Prints the object representation using the given custom formatter."""
     if value is not None:
-        print(printer.repr(value)) # This attribute has to be set elsewhere
+        print(printer.repr(value))
 
 def temp_replace(obj, attr_name, value):
     """
@@ -23,13 +23,41 @@ def temp_replace(obj, attr_name, value):
         return wrapper
     return decorator
 
+def obj_by_module_attr_address(address):
+    """
+    Gets a "module.submodule.submodule:object.attribute.attribute" from this
+    string-like address (with as many nesting levels as needed).
+    """
+    if ":" not in address:
+        bname = "__builtin__" if sys.version_info.major == 2 else "builtins"
+        address = ":".join([bname, address])
+    module_name, func_name = address.split(":", 1)
+    module = importlib.import_module(module_name)
+    return functools.reduce(getattr, func_name.split("."), module)
+
+_help = {
+  "plugin": "Customizing the display hook for doctests",
+  "repr": "Address to a object representation callable as a "
+          "'module:callable' string. Calling module.callable(obj) "
+          "should format the doctest output obj. Common values would"
+          "be IPython.lib.pretty:pretty, pprint:pformat, ascii.",
+}
+
+def pytest_addoption(parser):
+    """Hook that adds the plugin option for customizing the plugin."""
+    group = parser.getgroup("doctest_custom", _help["plugin"])
+    group.addoption("--doctest-repr", action="store", dest="doctest_repr",
+                    default="repr", help=_help["repr"])
+
 def pytest_configure(config):
     """
     Hook for changing ``doctest.DocTestRunner.run`` method so that the
     ``sys.__displayhook__`` calls the given printer function while a doctest
-    is running.
+    is running, restoring it back afterwards, and also to get the plugin
+    options.
     """
     import doctest
+    printer.repr = obj_by_module_attr_address(config.option.doctest_repr)
     enable_printer = temp_replace(sys, "__displayhook__", printer)
     doctest.DocTestRunner.run = enable_printer(doctest.DocTestRunner.run)
     # As the public method doctest.DocTestRunner.run replaces sys.displayhook
