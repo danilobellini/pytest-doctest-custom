@@ -8,7 +8,7 @@ metadata = {
   "author_email": "danilo.bellini.gmail.com",
   "url": "http://github.com/danilobellini/pytest-doctest-custom",
   "py_modules": ["pytest_doctest_custom"],
-  "install_requires": ["pytest"],
+  "install_requires": ["pytest>=2.8.5"],
   "entry_points": {"pytest11": ["doctest_custom = pytest_doctest_custom"]},
   "description": "A py.test plugin to use a custom "
                  "printer/formatter for doctest results.",
