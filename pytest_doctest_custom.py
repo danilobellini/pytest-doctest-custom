@@ -1,6 +1,6 @@
 """Py.test doctest custom plugin"""
 # By Danilo J. S. Bellini
-import sys, importlib, functools
+import sys, functools
 
 def printer(value):
     """Prints the object representation using the given custom formatter."""
@@ -29,10 +29,10 @@ def obj_by_module_attr_address(address):
     string-like address (with as many nesting levels as needed).
     """
     if ":" not in address:
-        bname = "__builtin__" if sys.version_info.major == 2 else "builtins"
+        bname = "__builtin__" if sys.version_info[0] == 2 else "builtins"
         address = ":".join([bname, address])
     module_name, func_name = address.split(":", 1)
-    module = importlib.import_module(module_name)
+    module = __import__(module_name, fromlist=module_name.split(".")[:-1])
     return functools.reduce(getattr, func_name.split("."), module)
 
 _help = {
