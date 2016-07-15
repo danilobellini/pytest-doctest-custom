@@ -1,3 +1,5 @@
+import os, sys, pytest
+
 pytest_plugins = "pytester"  # Enables the testdir fixture
 
 commonargs = "--verbose", "--doctest-modules"
@@ -27,6 +29,16 @@ def test_help_message(testdir):
     result = testdir.runpytest('--help')
     from pytest_doctest_custom import _help
     result.stdout.fnmatch_lines([
-      _help["plugin"] + ":",
+      _help["plugin"].join("*:"),
       _help["repr"][:30].join("**"),
     ])
+
+@pytest.mark.skipif("TOXENV" not in os.environ, reason="Not running with tox")
+def test_tox_python_pytest_versions():
+    """Meta-test to ensure Python and py.test versions are correct."""
+    py_ver, pytest_ver = os.environ["TOXENV"].split("-")
+    if any(k.startswith("pypy") for k in dir(sys)):
+      assert py_ver == "pypy"
+    else:
+      assert py_ver == "py%d%d" % sys.version_info[:2]
+    assert pytest_ver == "pytest" + pytest.__version__.replace(".", "")
