@@ -7,6 +7,7 @@ metadata = {
   "author": "Danilo J. S. Bellini",
   "author_email": "danilo.bellini.gmail.com",
   "url": "http://github.com/danilobellini/pytest-doctest-custom",
+  "license": "MIT",
   "py_modules": ["pytest_doctest_custom"],
   "install_requires": ["pytest>=2.1"],
   "entry_points": {"pytest11": ["doctest_custom = pytest_doctest_custom"]},
@@ -18,6 +19,7 @@ metadata["classifiers"] = """
 Development Status :: 2 - Pre-Alpha
 Framework :: Pytest
 Intended Audience :: Developers
+License :: OSI Approved :: MIT License
 Operating System :: POSIX :: Linux
 Operating System :: OS Independent
 Programming Language :: Python
