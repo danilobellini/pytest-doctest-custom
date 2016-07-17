@@ -1,6 +1,6 @@
 """Py.test doctest custom plugin"""
 # By Danilo J. S. Bellini
-import sys, functools
+import sys, functools, pytest
 
 # Compatibility stuff
 try:
@@ -34,11 +34,37 @@ def temp_replace(obj, attr_name, value):
         return wrapper
     return decorator
 
+def replace_exception(raised, to_raise):
+    """
+    Parametrized decorator for replacing exception class or tuple of
+    classes ``raised`` by ``to_raise`` called with the previously raised
+    exception as its sole argument.
+    """
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                return func(*args, **kwargs)
+            except raised as exc:
+                raise to_raise(exc)
+        return wrapper
+    return decorator
+
+class PluginError(pytest.UsageError):
+    def __init__(self, exc):
+        msg = "[{0}] {1}".format(type(exc).__name__, exc)
+        super(PluginError, self).__init__(msg)
+
+@replace_exception((ImportError, AttributeError, ValueError), PluginError)
 def parse_address(address):
     """
     Gets a "module.submodule.submodule:object.attribute.attribute" object
     from this string-like address (with as many nesting levels as needed).
     """
+    if not address:
+        raise ValueError("Empty doctest-repr address")
+    if address.count(":") > 1:
+        raise ValueError("Multiple colon in doctest-repr address")
     if ":" in address:
         module_name, func_name = address.split(":", 1)
         module = import_module(module_name)
