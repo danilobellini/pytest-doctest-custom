@@ -1,8 +1,21 @@
-import os, sys, pytest, pytest_doctest_custom
+import re, os, sys, pytest, pytest_doctest_custom
 
 pytest_plugins = "pytester"  # Enables the testdir fixture
 
 PYPY = any(k.startswith("pypy") for k in dir(sys))
+PY2 = sys.version_info[0] == 2
+SPLIT_DOCTEST = pytest.__version__ >= "2.4"
+
+def join_lines(before, after, src):
+    """
+    Remove the newline and indent between a pair of lines where the first
+    ends with ``before`` and the second starts with ``after``
+    """
+    before_re = "][".join(before).join("[]")
+    after_re = "][".join(after).join("[]")
+    regex = "\n\\s*".join([before_re, after_re])
+    return re.sub(regex, " ".join([before, after]), src)
+
 
 class TestStrLowerAsRepr(object):
     src_pass = """
@@ -25,6 +38,105 @@ class TestStrLowerAsRepr(object):
         result = testdir.runpytest(*self.args)
         result.assert_outcomes(passed=0, skipped=0, failed=1)
         result.stdout.fnmatch_lines("test_invalid_src.py*FAILED")
+
+
+class TestPPrintAsRepr(object):
+    args = "--doctest-repr=pprint:pformat", "--verbose", "--doctest-modules"
+
+    src_list = '''
+        def one_to(n):
+            """
+            >>> [[a*b for a in one_to(4)] for b in one_to(9)]
+            [[1, 2, 3, 4],
+             [2, 4, 6, 8],
+             [3, 6, 9, 12],
+             [4, 8, 12, 16],
+             [5, 10, 15, 20],
+             [6, 12, 18, 24],
+             [7, 14, 21, 28],
+             [8, 16, 24, 32],
+             [9, 18, 27, 36]]
+            """
+            return range(1, n + 1)
+        def test_one_to(): # Meta-test
+            assert list(one_to(0)) == []
+            assert list(one_to(1)) == [1]
+            assert list(one_to(2)) == [1, 2]
+            assert list(one_to(3)) == [1, 2, 3]
+    '''
+
+    def test_list_pass(self, testdir):
+        testdir.makepyfile(self.src_list)
+        result = testdir.runpytest(*self.args)
+        result.assert_outcomes(passed=2, skipped=0, failed=0)
+        dt_name = "test_list_pass.one_to" if SPLIT_DOCTEST else "doctest]"
+        result.stdout.fnmatch_lines([
+          "test_list_pass.py*%s PASSED" % dt_name,
+          "test_list_pass.py*test_one_to PASSED",
+        ])
+
+    def test_list_fail(self, testdir):
+        src_fail = join_lines(",", "[", self.src_list)
+        testdir.makepyfile(src_fail)
+        result = testdir.runpytest(*self.args)
+        result.assert_outcomes(passed=1, skipped=0, failed=1)
+        dt_name = "test_list_fail.one_to" if SPLIT_DOCTEST else "doctest]"
+        result.stdout.fnmatch_lines([
+          "test_list_fail.py*%s FAILED" % dt_name,
+          "test_list_fail.py*test_one_to PASSED",
+        ])
+
+    src_dict = '''
+        """
+        >>> {"hey": upper("Why?"),
+        ...  "abcdefgh": set([3]),
+        ...  "weird": 2,
+        ...  "was": -5}
+        {'abcdefgh': %s, 'hey': 'WHY?', 'was': -5, 'weird': 2}
+        """
+        def upper(anything):
+            """
+            >>> from string import ascii_lowercase as low
+            >>> dict(zip(low[::-3], map(upper, low)))
+            {'b': 'I',
+             'e': 'H',
+             'h': 'G',
+             'k': 'F',
+             'n': 'E',
+             'q': 'D',
+             't': 'C',
+             'w': 'B',
+             'z': 'A'}
+            """
+            return anything.upper()
+    ''' % ("set([3])" if PY2 else "{3}")
+
+    def test_sorted_dict_pass(self, testdir):
+        testdir.makepyfile(self.src_dict)
+        result = testdir.runpytest(*self.args)
+        if SPLIT_DOCTEST:
+            result.assert_outcomes(passed=2, skipped=0, failed=0)
+            result.stdout.fnmatch_lines([
+              "*test_sorted_dict_pass PASSED",
+              "*test_sorted_dict_pass.upper PASSED",
+            ])
+        else:
+            result.assert_outcomes(passed=1, skipped=0, failed=0)
+            result.stdout.fnmatch_lines(["*doctest] PASSED"])
+
+    def test_sorted_dict_half_fail(self, testdir):
+        src_fail = join_lines(",", "'", self.src_dict)
+        testdir.makepyfile(src_fail)
+        result = testdir.runpytest(*self.args)
+        if SPLIT_DOCTEST:
+            result.assert_outcomes(passed=1, skipped=0, failed=1)
+            result.stdout.fnmatch_lines([
+              "*test_sorted_dict_half_fail PASSED",
+              "*test_sorted_dict_half_fail.upper FAILED",
+            ])
+        else:
+            result.assert_outcomes(passed=0, skipped=0, failed=1)
+            result.stdout.fnmatch_lines(["*doctest] FAILED"])
 
 
 class TestReprAddress(object):
