@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import setuptools
+import os, setuptools
 
 metadata = {
   "name": "pytest-doctest-custom",
@@ -11,9 +11,12 @@ metadata = {
   "py_modules": ["pytest_doctest_custom"],
   "install_requires": ["pytest>=2.1"],
   "entry_points": {"pytest11": ["doctest_custom = pytest_doctest_custom"]},
-  "description": "A py.test plugin to use a custom "
-                 "printer/formatter for doctest results.",
 }
+
+fname_readme = os.path.join(os.path.dirname(__file__), "README.rst")
+with open(fname_readme, "r") as f:
+    metadata["long_description"] = rdata = f.read()
+    metadata["description"] = rdata.split("\n\n", 2)[1]
 
 metadata["classifiers"] = """
 Development Status :: 2 - Pre-Alpha
