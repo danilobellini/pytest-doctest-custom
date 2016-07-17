@@ -2,6 +2,17 @@
 # By Danilo J. S. Bellini
 import sys, functools
 
+# Compatibility stuff
+try:
+    import builtins # Python 3
+except ImportError:
+    import __builtin__ as builtins
+try:
+    from importlib import import_module # Python 2.7+
+except ImportError:
+    def import_module(module_name):
+        return __import__(module_name, fromlist=module_name.split(".")[:-1])
+
 def printer(value):
     """Prints the object representation using the given custom formatter."""
     if value is not None:
@@ -23,19 +34,20 @@ def temp_replace(obj, attr_name, value):
         return wrapper
     return decorator
 
-def obj_by_module_attr_address(address):
+def parse_address(address):
     """
-    Gets a "module.submodule.submodule:object.attribute.attribute" from this
-    string-like address (with as many nesting levels as needed).
+    Gets a "module.submodule.submodule:object.attribute.attribute" object
+    from this string-like address (with as many nesting levels as needed).
     """
-    if ":" not in address:
-        bname = "__builtin__" if sys.version_info[0] == 2 else "builtins"
-        address = ":".join([bname, address])
-    module_name, func_name = address.split(":", 1)
-    module = __import__(module_name, fromlist=module_name.split(".")[:-1])
+    if ":" in address:
+        module_name, func_name = address.split(":", 1)
+        module = import_module(module_name)
+    else:
+        func_name = address
+        module = builtins
     return functools.reduce(getattr, func_name.split("."), module)
 
-_help = {
+HELP = {
   "plugin": "Customizing the display hook for doctests",
   "repr": "Address to a object representation callable as a "
           "'module:callable' string. Calling module.callable(obj) "
@@ -45,21 +57,24 @@ _help = {
 
 def pytest_addoption(parser):
     """Hook that adds the plugin option for customizing the plugin."""
-    group = parser.getgroup("doctest_custom", _help["plugin"])
-    group.addoption("--doctest-repr", action="store", dest="doctest_repr",
-                    default="repr", help=_help["repr"])
+    group = parser.getgroup("doctest_custom", HELP["plugin"])
+    group.addoption("--doctest-repr", default="repr", help=HELP["repr"])
 
 def pytest_configure(config):
     """
-    Hook for changing ``doctest.DocTestRunner.run`` method so that the
-    ``sys.__displayhook__`` calls the given printer function while a doctest
-    is running, restoring it back afterwards, and also to get the plugin
-    options.
+    Config time (before session starts) hook that:
+
+    1. Parses/validates the plugin options;
+
+    2. Changes ``doctest.DocTestRunner.run`` method so that the
+    ``sys.__displayhook__`` and ``sys.displayhook`` are the plugin printer
+    function while a doctest is running, restoring them back afterwards.
     """
     import doctest
-    printer.repr = obj_by_module_attr_address(config.option.doctest_repr)
+    printer.repr = parse_address(config.option.doctest_repr)
     enable_printer = temp_replace(sys, "__displayhook__", printer)
     doctest.DocTestRunner.run = enable_printer(doctest.DocTestRunner.run)
     # As the public method doctest.DocTestRunner.run replaces sys.displayhook
-    # by sys.__displayhook__, we could also had changed "displayhook" on the
-    # _DocTestRunner__run protected method
+    # by sys.__displayhook__, that's enough. We could also had changed the
+    # displayhook on the _DocTestRunner__run protected method leaving the
+    # __displayhook__ as it is, for the sake of customizing doctests outputs
