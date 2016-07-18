@@ -52,6 +52,24 @@ tox.ini file for running toctests on a project would be::
             --doctest-repr=IPython.lib.pretty:pretty
             --ignore setup.py
 
+You can customize its parameters such as the ``max_width`` and
+``max_seq_length`` by creating a custom function for your needs, e.g. by
+adding this to the ``conftest.py`` module and calling py.test with
+``--doctest-repr=conftest:doctest_pretty``:
+
+.. code-block:: python
+
+  # conftest.py
+  from IPython.lib.pretty import pretty
+  def doctest_pretty(value):
+      return pretty(value, max_width=72)
+
+This pretty printer sorts sets, frozensets and dicts (by keys), breaks lines
+with fixed indentation, and has a consistent set/frozenset printing result for
+testing on both Python 2 and 3 (CPython 2.7 and 3.3+). But it's not a Python
+standard library, such printer need IPython as a requirement for running the
+tests, which comes with much more stuff, not just the pretty printer.
+
 * *Python Standard Library Pretty Printer*
 
 You can use the ``pprint.pformat`` function directly with
@@ -70,6 +88,14 @@ To customize its parameters such as ``width`` and ``indent``, you can put a
 To run py.test with the ``pformat`` attribute of that ``PrettyPrinter``
 instance, giving with ``--doctest-repr=conftest:doctest_pp.pformat`` shall be
 enough.
+
+The standard library pretty printer sorts dicts (by keys), breaks lines with a
+custom indentation size, but several containers have a result that depends on
+the Python version (e.g. empty set as ``"set()"`` in Python 2.6 and 3 but as
+``set([])`` in Python 2.7, single item set as ``{item}`` in Python 3 but as
+``set([item])`` in Python 2). On the other hand, this is a Python standard
+library, there's no extra requirement for tests, and behaves in PyPy as it
+does in CPython.
 
 
 Installing
