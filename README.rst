@@ -29,9 +29,9 @@ Common representation formatters/printers
 -----------------------------------------
 
 Be careful with the default "printers", you should always use the formatting
-methods/functions instead of printing ones, as printer objects like the
-``pprint.PrettyPrinter`` assigns themselves to ``sys.stdout`` before it was
-mocked by the doctest internals.
+methods/functions instead of printing ones, as printer objects commonly
+assigns themselves to ``sys.stdout`` on initialization and the doctest runner
+collects printed data by shortly mocking such stream.
 
 * *IPython Pretty Printer* (for output, without the "Out[#]:" prefix)
 
@@ -55,7 +55,21 @@ tox.ini file for running toctests on a project would be::
 * *Python Standard Library Pretty Printer*
 
 You can use the ``pprint.pformat`` function directly with
-``--doctest-repr=ppretty:pformat``.
+``--doctest-repr=ppretty:pformat``. You can't directly use the ``pprint``
+method from ``pprint.PrettyPrinter`` objects.
+
+To customize its parameters such as ``width`` and ``indent``, you can put a
+``PrettyPrinter`` object in your code, for example:
+
+.. code-block:: python
+
+  # conftest.py
+  import pprint
+  doctest_pp = pprint.PrettyPrinter(width=72)
+
+To run py.test with the ``pformat`` attribute of that ``PrettyPrinter``
+instance, giving with ``--doctest-repr=conftest:doctest_pp.pformat`` shall be
+enough.
 
 
 Installing

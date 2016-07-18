@@ -6,15 +6,16 @@ PYPY = any(k.startswith("pypy") for k in dir(sys))
 PY2 = sys.version_info[0] == 2
 SPLIT_DOCTEST = pytest.__version__ >= "2.4"
 
-def join_lines(before, after, src):
+def join_lines(src, before, after, sep=" "):
     """
     Remove the newline and indent between a pair of lines where the first
-    ends with ``before`` and the second starts with ``after``
+    ends with ``before`` and the second starts with ``after``, replacing
+    it by the ``sep``.
     """
     before_re = "][".join(before).join("[]")
     after_re = "][".join(after).join("[]")
     regex = "\n\\s*".join([before_re, after_re])
-    return re.sub(regex, " ".join([before, after]), src)
+    return re.sub(regex, sep.join([before, after]), src)
 
 
 class TestStrLowerAsRepr(object):
@@ -43,6 +44,14 @@ class TestStrLowerAsRepr(object):
 class TestPPrintAsRepr(object):
     args = "--doctest-repr=pprint:pformat", "--verbose", "--doctest-modules"
 
+    args_custom = ("--doctest-repr", "conftest:doctest_pp.pformat",
+                   "--verbose", "--doctest-modules")
+
+    src_conftest_custom = '''
+        import pprint
+        doctest_pp = pprint.PrettyPrinter(width=1000)
+    '''
+
     src_list = '''
         def one_to(n):
             """
@@ -64,6 +73,7 @@ class TestPPrintAsRepr(object):
             assert list(one_to(2)) == [1, 2]
             assert list(one_to(3)) == [1, 2, 3]
     '''
+    src_list_no_line_break = join_lines(src_list, ",", "[")
 
     def test_list_pass(self, testdir):
         testdir.makepyfile(self.src_list)
@@ -76,14 +86,29 @@ class TestPPrintAsRepr(object):
         ])
 
     def test_list_fail(self, testdir):
-        src_fail = join_lines(",", "[", self.src_list)
-        testdir.makepyfile(src_fail)
+        testdir.makepyfile(self.src_list_no_line_break)
         result = testdir.runpytest(*self.args)
         result.assert_outcomes(passed=1, skipped=0, failed=1)
         dt_name = "test_list_fail.one_to" if SPLIT_DOCTEST else "doctest]"
         result.stdout.fnmatch_lines([
           "test_list_fail.py*%s FAILED" % dt_name,
           "test_list_fail.py*test_one_to PASSED",
+        ])
+
+    def test_list_custom_pformat_fix_width(self, testdir):
+        testdir.makeconftest(self.src_conftest_custom)
+        testdir.makepyfile(self.src_list_no_line_break)
+        result = testdir.runpytest(*self.args_custom)
+        if SPLIT_DOCTEST:
+            result.assert_outcomes(passed=2, skipped=0, failed=0)
+            dt_name = "test_list_custom_pformat_fix_width.one_to"
+        else:
+            result.assert_outcomes(passed=3, skipped=0, failed=0)
+            result.stdout.fnmatch_lines(["conftest.py*doctest] PASSED"])
+            dt_name = "doctest]"
+        result.stdout.fnmatch_lines([
+          "test_list_custom_pformat_fix_width.py*%s PASSED" % dt_name,
+          "test_list_custom_pformat_fix_width.py*test_one_to PASSED",
         ])
 
     src_dict = '''
@@ -110,6 +135,7 @@ class TestPPrintAsRepr(object):
             """
             return anything.upper()
     ''' % ("set([3])" if PY2 else "{3}")
+    src_dict_no_line_break = join_lines(src_dict, ",", "'")
 
     def test_sorted_dict_pass(self, testdir):
         testdir.makepyfile(self.src_dict)
@@ -125,8 +151,7 @@ class TestPPrintAsRepr(object):
             result.stdout.fnmatch_lines(["*doctest] PASSED"])
 
     def test_sorted_dict_half_fail(self, testdir):
-        src_fail = join_lines(",", "'", self.src_dict)
-        testdir.makepyfile(src_fail)
+        testdir.makepyfile(self.src_dict_no_line_break)
         result = testdir.runpytest(*self.args)
         if SPLIT_DOCTEST:
             result.assert_outcomes(passed=1, skipped=0, failed=1)
@@ -137,6 +162,19 @@ class TestPPrintAsRepr(object):
         else:
             result.assert_outcomes(passed=0, skipped=0, failed=1)
             result.stdout.fnmatch_lines(["*doctest] FAILED"])
+
+    def test_sorted_dict_custom_pformat_fix_width(self, testdir):
+        testdir.makeconftest(self.src_conftest_custom)
+        testdir.makepyfile(self.src_dict_no_line_break)
+        result = testdir.runpytest(*self.args_custom)
+        result.assert_outcomes(passed=2, skipped=0, failed=0)
+        result.stdout.fnmatch_lines([
+          "*test_sorted_dict_custom_pformat_fix_width PASSED",
+          "*test_sorted_dict_custom_pformat_fix_width.upper PASSED",
+        ] if SPLIT_DOCTEST else [
+          "*doctest] PASSED",
+          "*doctest] PASSED",
+        ])
 
 
 class TestReprAddress(object):
