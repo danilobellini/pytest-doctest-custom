@@ -5,6 +5,7 @@ pytest_plugins = "pytester"  # Enables the testdir fixture
 PYPY = any(k.startswith("pypy") for k in dir(sys))
 PY2 = sys.version_info[0] == 2
 SPLIT_DOCTEST = pytest.__version__ >= "2.4"
+NO_IPYTHON = PYPY or sys.version_info < (2,7)
 
 def join_lines(src, before, after, sep=" "):
     """
@@ -41,17 +42,15 @@ class TestStrLowerAsRepr(object):
         result.stdout.fnmatch_lines("test_invalid_src.py*FAILED")
 
 
-class TestPPrintAsRepr(object):
-    args = "--doctest-repr=pprint:pformat", "--verbose", "--doctest-modules"
+# "Abstract" tests below are for pretty printers with some sort of multiline
+# and/or sorted contents. Also tests single line behavior, for which a custom
+# representation formatter object should be stored in conftest.py to ensure a
+# larger width (150 is enough).
 
-    args_custom = ("--doctest-repr", "conftest:doctest_pp.pformat",
-                   "--verbose", "--doctest-modules")
-
-    src_conftest_custom = '''
-        import pprint
-        doctest_pp = pprint.PrettyPrinter(width=1000)
-    '''
-
+class ATestList(object):
+    """
+    Abstract attributes: args, args_custom, src_conftest_custom
+    """
     src_list = '''
         def one_to(n):
             """
@@ -95,22 +94,27 @@ class TestPPrintAsRepr(object):
           "test_list_fail.py*test_one_to PASSED",
         ])
 
-    def test_list_custom_pformat_fix_width(self, testdir):
+    def test_list_custom_fix_width(self, testdir):
         testdir.makeconftest(self.src_conftest_custom)
         testdir.makepyfile(self.src_list_no_line_break)
         result = testdir.runpytest(*self.args_custom)
         if SPLIT_DOCTEST:
             result.assert_outcomes(passed=2, skipped=0, failed=0)
-            dt_name = "test_list_custom_pformat_fix_width.one_to"
+            dt_name = "test_list_custom_fix_width.one_to"
         else:
             result.assert_outcomes(passed=3, skipped=0, failed=0)
             result.stdout.fnmatch_lines(["conftest.py*doctest] PASSED"])
             dt_name = "doctest]"
         result.stdout.fnmatch_lines([
-          "test_list_custom_pformat_fix_width.py*%s PASSED" % dt_name,
-          "test_list_custom_pformat_fix_width.py*test_one_to PASSED",
+          "test_list_custom_fix_width.py*%s PASSED" % dt_name,
+          "test_list_custom_fix_width.py*test_one_to PASSED",
         ])
 
+
+class ATestDict(object):
+    """
+    Abstract attributes: args, args_custom, src_conftest_custom, set3repr
+    """
     src_dict = '''
         """
         >>> {"hey": upper("Why?"),
@@ -134,11 +138,11 @@ class TestPPrintAsRepr(object):
              'z': 'A'}
             """
             return anything.upper()
-    ''' % ("set([3])" if PY2 else "{3}")
+    '''
     src_dict_no_line_break = join_lines(src_dict, ",", "'")
 
     def test_sorted_dict_pass(self, testdir):
-        testdir.makepyfile(self.src_dict)
+        testdir.makepyfile(self.src_dict % self.set3repr)
         result = testdir.runpytest(*self.args)
         if SPLIT_DOCTEST:
             result.assert_outcomes(passed=2, skipped=0, failed=0)
@@ -151,7 +155,7 @@ class TestPPrintAsRepr(object):
             result.stdout.fnmatch_lines(["*doctest] PASSED"])
 
     def test_sorted_dict_half_fail(self, testdir):
-        testdir.makepyfile(self.src_dict_no_line_break)
+        testdir.makepyfile(self.src_dict_no_line_break % self.set3repr)
         result = testdir.runpytest(*self.args)
         if SPLIT_DOCTEST:
             result.assert_outcomes(passed=1, skipped=0, failed=1)
@@ -163,18 +167,120 @@ class TestPPrintAsRepr(object):
             result.assert_outcomes(passed=0, skipped=0, failed=1)
             result.stdout.fnmatch_lines(["*doctest] FAILED"])
 
-    def test_sorted_dict_custom_pformat_fix_width(self, testdir):
+    def test_sorted_dict_custom_fix_width(self, testdir):
         testdir.makeconftest(self.src_conftest_custom)
-        testdir.makepyfile(self.src_dict_no_line_break)
+        testdir.makepyfile(self.src_dict_no_line_break % self.set3repr)
         result = testdir.runpytest(*self.args_custom)
         result.assert_outcomes(passed=2, skipped=0, failed=0)
         result.stdout.fnmatch_lines([
-          "*test_sorted_dict_custom_pformat_fix_width PASSED",
-          "*test_sorted_dict_custom_pformat_fix_width.upper PASSED",
+          "*test_sorted_dict_custom_fix_width PASSED",
+          "*test_sorted_dict_custom_fix_width.upper PASSED",
         ] if SPLIT_DOCTEST else [
           "*doctest] PASSED",
           "*doctest] PASSED",
         ])
+
+
+class ATestSet(object):
+    """
+    Abstract attributes: args, args_custom, src_conftest_custom
+    """
+    src_set = '''
+        """
+        >>> import string
+        >>> set(string.digits)
+        {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9'}
+        """
+        from functools import reduce
+        def union(*args):
+            """
+            >>> union([5734500, 545312, 50200], range(50198,50208), [50205])
+            {50198,
+             50199,
+             50200,
+             50201,
+             50202,
+             50203,
+             50204,
+             50205,
+             50206,
+             50207,
+             545312,
+             5734500}
+            """
+            return reduce(set.union, map(set, args))
+    '''
+    src_set_no_line_break = join_lines(src_set, ",", "5")
+
+    def test_sorted_set_pass(self, testdir):
+        testdir.makepyfile(self.src_set)
+        result = testdir.runpytest(*self.args)
+        if SPLIT_DOCTEST:
+            result.assert_outcomes(passed=2, skipped=0, failed=0)
+            result.stdout.fnmatch_lines([
+              "*test_sorted_set_pass PASSED",
+              "*test_sorted_set_pass.union PASSED",
+            ])
+        else:
+            result.assert_outcomes(passed=1, skipped=0, failed=0)
+            result.stdout.fnmatch_lines(["*doctest] PASSED"])
+
+    def test_sorted_set_half_fail(self, testdir):
+        testdir.makepyfile(self.src_set_no_line_break)
+        result = testdir.runpytest(*self.args)
+        if SPLIT_DOCTEST:
+            result.assert_outcomes(passed=1, skipped=0, failed=1)
+            result.stdout.fnmatch_lines([
+              "*test_sorted_set_half_fail PASSED",
+              "*test_sorted_set_half_fail.union FAILED",
+            ])
+        else:
+            result.assert_outcomes(passed=0, skipped=0, failed=1)
+            result.stdout.fnmatch_lines(["*doctest] FAILED"])
+
+    def test_sorted_set_custom_fix_width(self, testdir):
+        testdir.makeconftest(self.src_conftest_custom)
+        testdir.makepyfile(self.src_set_no_line_break)
+        result = testdir.runpytest(*self.args_custom)
+        result.assert_outcomes(passed=2, skipped=0, failed=0)
+        result.stdout.fnmatch_lines([
+          "*test_sorted_set_custom_fix_width PASSED",
+          "*test_sorted_set_custom_fix_width.union PASSED",
+        ] if SPLIT_DOCTEST else [
+          "*doctest] PASSED",
+          "*doctest] PASSED",
+        ])
+
+
+class TestPPrintAsRepr(ATestList, ATestDict):
+    args = "--doctest-repr=pprint:pformat", "--verbose", "--doctest-modules"
+
+    set3repr = "set([3])" if PY2 else "{3}"
+
+    args_custom = ("--doctest-repr", "conftest:doctest_pp.pformat",
+                   "--verbose", "--doctest-modules")
+
+    src_conftest_custom = '''
+        import pprint
+        doctest_pp = pprint.PrettyPrinter(width=150)
+    '''
+
+
+@pytest.mark.skipif(NO_IPYTHON, reason="IPython only in CPython 2.7/3.3+")
+class TestIPythonPrettyAsRepr(ATestList, ATestDict, ATestSet):
+    args = ("--doctest-repr=IPython.lib.pretty:pretty",
+            "--verbose", "--doctest-modules")
+
+    set3repr = "{3}"
+
+    args_custom = ("--doctest-repr", "conftest:doctest_pretty",
+                   "--verbose", "--doctest-modules")
+
+    src_conftest_custom = '''
+        from IPython.lib.pretty import pretty
+        def doctest_pretty(value):
+            return pretty(value, max_width=150)
+    '''
 
 
 class TestReprAddress(object):
