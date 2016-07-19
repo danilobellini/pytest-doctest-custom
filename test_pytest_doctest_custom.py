@@ -5,7 +5,7 @@ pytest_plugins = "pytester"  # Enables the testdir fixture
 PYPY = any(k.startswith("pypy") for k in dir(sys))
 PY2 = sys.version_info[0] == 2
 SPLIT_DOCTEST = pytest.__version__ >= "2.4"
-NO_IPYTHON = PYPY or sys.version_info < (2,7)
+NO_IPYTHON = sys.version_info < (2,7)
 
 def join_lines(src, before, after, sep=" "):
     """
@@ -266,7 +266,7 @@ class TestPPrintAsRepr(ATestList, ATestDict):
     '''
 
 
-@pytest.mark.skipif(NO_IPYTHON, reason="IPython only in CPython 2.7/3.3+")
+@pytest.mark.skipif(NO_IPYTHON, reason="IPython only in Python 2.7/3.3+")
 class TestIPythonPrettyAsRepr(ATestList, ATestDict, ATestSet):
     args = ("--doctest-repr=IPython.lib.pretty:pretty",
             "--verbose", "--doctest-modules")
@@ -281,6 +281,18 @@ class TestIPythonPrettyAsRepr(ATestList, ATestDict, ATestSet):
         def doctest_pretty(value):
             return pretty(value, max_width=150)
     '''
+
+    # Code to fix the undesired IPython replacement of the dict representation
+    # printer by the dictproxy one in PyPy, using the IPython dict pretty
+    # printer factory itself for such.
+    pypy_fix_dict_repr = '''
+        from IPython.lib.pretty import _type_pprinters, _dict_pprinter_factory
+        _type_pprinters[dict] = _dict_pprinter_factory("{", "}", dict)
+    '''
+
+    if PYPY:
+        src_dict = ATestDict.src_dict + pypy_fix_dict_repr
+        src_dict_no_line_break = join_lines(src_dict, ",", "'")
 
 
 class TestReprAddress(object):

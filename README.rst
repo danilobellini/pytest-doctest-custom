@@ -70,6 +70,16 @@ testing on both Python 2 and 3 (CPython 2.7 and 3.3+). But it's not a Python
 standard library, such printer need IPython as a requirement for running the
 tests, which comes with much more stuff, not just the pretty printer.
 
+In PyPy that representation printer shows any dict as a dictproxy (tested with
+IPython 5.0.0, PyPy 5.3.1) because they're all the same and the dict printer
+gets replaced, so a hack is required to ensure a common behavior between
+CPython and PyPy. You can create a ``pytest_configure`` hook in the very same
+``conftest.py`` either to monkeypatch to ``types.DictProxyType`` a dict
+derivative like ``type("dictproxy", (dict,), {})`` reloading the
+``IPython.lib.pretty`` module afterwards, or to rebuild the
+``IPython.lib.pretty`` dict representation printer by assigning back its
+``_dict_pprinter_factory("{", "}", dict)`` to its ``_type_pprinters[dict]``.
+
 * *Python Standard Library Pretty Printer*
 
 You can use the ``pprint.pformat`` function directly with
