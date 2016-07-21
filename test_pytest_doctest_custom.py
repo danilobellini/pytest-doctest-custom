@@ -5,7 +5,6 @@ pytest_plugins = "pytester"  # Enables the testdir fixture
 PYPY = any(k.startswith("pypy") for k in dir(sys))
 PY2 = sys.version_info[0] == 2
 SPLIT_DOCTEST = pytest.__version__ >= "2.4"
-NO_IPYTHON = sys.version_info < (2,7)
 
 def join_lines(src, before, after, sep=" "):
     """
@@ -266,7 +265,6 @@ class TestPPrintAsRepr(ATestList, ATestDict):
     '''
 
 
-@pytest.mark.skipif(NO_IPYTHON, reason="IPython only in Python 2.7/3.3+")
 class TestIPythonPrettyAsRepr(ATestList, ATestDict, ATestSet):
     args = ("--doctest-repr=IPython.lib.pretty:pretty",
             "--verbose", "--doctest-modules")

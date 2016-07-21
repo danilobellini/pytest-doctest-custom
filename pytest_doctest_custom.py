@@ -1,6 +1,6 @@
 """Py.test doctest custom plugin"""
 # By Danilo J. S. Bellini
-import sys, functools, pytest
+import io, sys, functools, pytest
 
 # Compatibility stuff
 try:
@@ -28,8 +28,10 @@ def temp_replace(obj, attr_name, value):
         def wrapper(*args, **kwargs):
             backup = getattr(obj, attr_name)
             setattr(obj, attr_name, value)
-            result = func(*args, **kwargs)
-            setattr(obj, attr_name, backup)
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                setattr(obj, attr_name, backup)
             return result
         return wrapper
     return decorator
@@ -55,6 +57,8 @@ class PluginError(pytest.UsageError):
         msg = "[{0}] {1}".format(type(exc).__name__, exc)
         super(PluginError, self).__init__(msg)
 
+@temp_replace(sys, "stdout", io.BytesIO())
+@temp_replace(sys, "stderr", io.BytesIO())
 @replace_exception((ImportError, AttributeError, ValueError), PluginError)
 def parse_address(address):
     """

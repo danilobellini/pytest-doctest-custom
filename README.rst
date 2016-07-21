@@ -69,6 +69,8 @@ with fixed indentation, and has a consistent set/frozenset printing result for
 testing on both Python 2 and 3 (CPython 2.7 and 3.3+). But it's not a Python
 standard library, such printer need IPython as a requirement for running the
 tests, which comes with much more stuff, not just the pretty printer.
+In Python 2.6 you need to ensure that the IPython version is compatible (e.g.
+with ``deps = ipython<2`` in your ``tox.ini``).
 
 In PyPy that representation printer shows any dict as a dictproxy (tested with
 IPython 5.0.0, PyPy 5.3.1) because they're all the same and the dict printer
