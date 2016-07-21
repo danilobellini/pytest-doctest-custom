@@ -18,6 +18,15 @@ def join_lines(src, before, after, sep=" "):
     return re.sub(regex, sep.join([before, after]), src)
 
 
+class JoinedDescr(object):
+    """Descriptor that performs a deferred call to join_lines."""
+    def __init__(self, attr_name, **kwargs):
+        self.attr_name = attr_name
+        self.kwargs = kwargs
+    def __get__(self, instance, owner):
+        return join_lines(getattr(instance, self.attr_name), **self.kwargs)
+
+
 class TestStrLowerAsRepr(object):
     src_pass = """
         '''
@@ -71,7 +80,7 @@ class ATestList(object):
             assert list(one_to(2)) == [1, 2]
             assert list(one_to(3)) == [1, 2, 3]
     '''
-    src_list_no_line_break = join_lines(src_list, ",", "[")
+    src_list_no_line_break = JoinedDescr("src_list", before=",", after="[")
 
     def test_list_pass(self, testdir):
         testdir.makepyfile(self.src_list)
@@ -138,7 +147,7 @@ class ATestDict(object):
             """
             return anything.upper()
     '''
-    src_dict_no_line_break = join_lines(src_dict, ",", "'")
+    src_dict_no_line_break = JoinedDescr("src_dict", before=",", after="'")
 
     def test_sorted_dict_pass(self, testdir):
         testdir.makepyfile(self.src_dict % self.set3repr)
@@ -209,7 +218,7 @@ class ATestSet(object):
             """
             return reduce(set.union, map(set, args))
     '''
-    src_set_no_line_break = join_lines(src_set, ",", "5")
+    src_set_no_line_break = JoinedDescr("src_set", before=",", after="5")
 
     def test_sorted_set_pass(self, testdir):
         testdir.makepyfile(self.src_set)
@@ -283,14 +292,11 @@ class TestIPythonPrettyAsRepr(ATestList, ATestDict, ATestSet):
     # Code to fix the undesired IPython replacement of the dict representation
     # printer by the dictproxy one in PyPy, using the IPython dict pretty
     # printer factory itself for such.
-    pypy_fix_dict_repr = '''
+    if PYPY:
+        src_dict = ATestDict.src_dict + '''
         from IPython.lib.pretty import _type_pprinters, _dict_pprinter_factory
         _type_pprinters[dict] = _dict_pprinter_factory("{", "}", dict)
-    '''
-
-    if PYPY:
-        src_dict = ATestDict.src_dict + pypy_fix_dict_repr
-        src_dict_no_line_break = join_lines(src_dict, ",", "'")
+        '''
 
 
 class TestReprAddress(object):
