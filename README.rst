@@ -24,6 +24,19 @@ object, returns a string with its representation. It should be passed as the
 dots for nested modules/objects. For built-ins like the ``ascii`` function,
 you can just remove the ``module:`` prefix.
 
+You can also also use a printer callable that always returns ``None`` but
+writes its result to some stream/file. In this case you should use this
+package ``stdout_proxy``::
+
+  # mymodule.py
+  from pytest_doctest_custom import stdout_proxy
+  from pprint import PrettyPrinter
+  pp = PrettyPrinter(width=72, stream=stdout_proxy).pprint
+
+So you can run::
+
+  py.test --doctest-modules --doctest-repr=mymodule:pp
+
 
 Common representation formatters/printers
 -----------------------------------------
@@ -31,7 +44,12 @@ Common representation formatters/printers
 Be careful with the default "printers", you should always use the formatting
 methods/functions instead of printing ones, as printer objects commonly
 assigns themselves to ``sys.stdout`` on initialization and the doctest runner
-collects printed data by shortly mocking such stream.
+collects printed data by shortly mocking such stream. This package temporarily
+changes the ``sys`` output/error streams while it finds the addressed
+callable, but that's not enough if the package had already been imported
+(like ``conftest.py``). When possible, use a representation formatter callable
+or be explicit about the output stream for the printer callable (it should be
+``pytest_doctest_custom.stdout_proxy``).
 
 * *IPython Pretty Printer* (for output, without the "Out[#]:" prefix)
 

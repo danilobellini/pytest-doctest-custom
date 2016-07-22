@@ -100,10 +100,8 @@ def parse_address(address):
 
 HELP = {
   "plugin": "Customizing the display hook for doctests",
-  "repr": "Address to a object representation callable as a "
-          "'module:callable' string. Calling module.callable(obj) "
-          "should format the doctest output obj. Common values would"
-          "be IPython.lib.pretty:pretty, pprint:pformat, ascii.",
+  "repr": "MODULE:CALLABLE address to a representation formatter or printer "
+          "(e.g. IPython.lib.pretty:pretty, pprint:pformat, ascii, repr)",
 }
 
 def pytest_addoption(parser):
