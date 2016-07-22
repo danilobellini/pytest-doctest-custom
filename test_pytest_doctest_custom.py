@@ -6,6 +6,21 @@ PYPY = any(k.startswith("pypy") for k in dir(sys))
 PY2 = sys.version_info[0] == 2
 SPLIT_DOCTEST = pytest.__version__ >= "2.4"
 
+
+@pytest.fixture
+def here(request):
+    """
+    Empty fixture to include the current dir to the system path,
+    required for modules to be imported in testdir tests.
+    """
+    if sys.path[0] != "":
+        old_sys_path = sys.path
+        sys.path = [""] + old_sys_path # Adds the test dir to the path
+        def finalizer():
+            sys.path = old_sys_path
+        request.addfinalizer(finalizer)
+
+
 def join_lines(src, before, after, sep=" "):
     """
     Remove the newline and indent between a pair of lines where the first
@@ -119,9 +134,7 @@ class ATestList(object):
           "test_list_conftest_fix_width.py*test_one_to PASSED",
         ])
 
-    def test_list_mymodule_fix_width(self, testdir):
-        if sys.path[0] != "":
-            sys.path = [""] + sys.path
+    def test_list_mymodule_fix_width(self, testdir, here):
         testdir.makepyfile(mymodule=self.src_mymodule)
         testdir.makepyfile(self.src_list_no_line_break)
         result = testdir.runpytest(*self.args_mymodule)
@@ -208,9 +221,7 @@ class ATestDict(object):
           "*doctest] PASSED",
         ])
 
-    def test_sorted_dict_mymodule_fix_width(self, testdir):
-        if sys.path[0] != "":
-            sys.path = [""] + sys.path
+    def test_sorted_dict_mymodule_fix_width(self, testdir, here):
         testdir.makepyfile(mymodule=self.src_mymodule)
         testdir.makepyfile(self.src_dict_no_line_break % self.set3repr)
         result = testdir.runpytest(*self.args_mymodule)
@@ -295,9 +306,7 @@ class ATestSet(object):
           "*doctest] PASSED",
         ])
 
-    def test_sorted_set_mymodule_fix_width(self, testdir):
-        if sys.path[0] != "":
-            sys.path = [""] + sys.path
+    def test_sorted_set_mymodule_fix_width(self, testdir, here):
         testdir.makepyfile(mymodule=self.src_mymodule)
         testdir.makepyfile(self.src_set_no_line_break)
         result = testdir.runpytest(*self.args_mymodule)
