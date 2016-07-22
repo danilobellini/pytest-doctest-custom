@@ -1,6 +1,6 @@
 """Py.test doctest custom plugin"""
 # By Danilo J. S. Bellini
-import io, sys, functools, pytest
+import sys, functools, pytest
 
 # Compatibility stuff
 try:
@@ -61,18 +61,25 @@ class PluginError(pytest.UsageError):
 
 class StandardStreamProxy(object):
     def __init__(self, name):
-        self.name = name
+        self._name = name
+
     def __getattr__(self, attr_name):
         return getattr(self.stream, attr_name)
+
+    @property
+    def _dname(self): # sys dunder name (fallback to avoid a recursion cycle)
+        return self._name.join(["__"] * 2)
+
     @property
     def stream(self):
-        return getattr(sys, self.name)
+        obj = getattr(sys, self._name)
+        return obj if obj is not self else getattr(sys, self._dname)
 
 stdout_proxy = StandardStreamProxy("stdout")
 stderr_proxy = StandardStreamProxy("stderr")
 
-@temp_replace(sys, "stdout", io.BytesIO())
-@temp_replace(sys, "stderr", io.BytesIO())
+@temp_replace(sys, "stdout", stdout_proxy) # For import time assignments
+@temp_replace(sys, "stderr", stderr_proxy)
 @replace_exception((ImportError, AttributeError, ValueError), PluginError)
 def parse_address(address):
     """

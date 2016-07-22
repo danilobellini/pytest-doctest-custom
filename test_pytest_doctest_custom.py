@@ -57,7 +57,8 @@ class TestStrLowerAsRepr(object):
 
 class ATestList(object):
     """
-    Abstract attributes: args, args_custom, src_conftest_custom
+    Abstract attributes: args, args_conftest, src_conftest, args_mymodule,
+                         src_mymodule
     """
     src_list = '''
         def one_to(n):
@@ -102,26 +103,45 @@ class ATestList(object):
           "test_list_fail.py*test_one_to PASSED",
         ])
 
-    def test_list_custom_fix_width(self, testdir):
-        testdir.makeconftest(self.src_conftest_custom)
+    def test_list_conftest_fix_width(self, testdir):
+        testdir.makeconftest(self.src_conftest)
         testdir.makepyfile(self.src_list_no_line_break)
-        result = testdir.runpytest(*self.args_custom)
+        result = testdir.runpytest(*self.args_conftest)
         if SPLIT_DOCTEST:
             result.assert_outcomes(passed=2, skipped=0, failed=0)
-            dt_name = "test_list_custom_fix_width.one_to"
+            dt_name = "test_list_conftest_fix_width.one_to"
         else:
             result.assert_outcomes(passed=3, skipped=0, failed=0)
             result.stdout.fnmatch_lines(["conftest.py*doctest] PASSED"])
             dt_name = "doctest]"
         result.stdout.fnmatch_lines([
-          "test_list_custom_fix_width.py*%s PASSED" % dt_name,
-          "test_list_custom_fix_width.py*test_one_to PASSED",
+          "test_list_conftest_fix_width.py*%s PASSED" % dt_name,
+          "test_list_conftest_fix_width.py*test_one_to PASSED",
+        ])
+
+    def test_list_mymodule_fix_width(self, testdir):
+        if sys.path[0] != "":
+            sys.path = [""] + sys.path
+        testdir.makepyfile(mymodule=self.src_mymodule)
+        testdir.makepyfile(self.src_list_no_line_break)
+        result = testdir.runpytest(*self.args_mymodule)
+        if SPLIT_DOCTEST:
+            result.assert_outcomes(passed=2, skipped=0, failed=0)
+            dt_name = "test_list_mymodule_fix_width.one_to"
+        else:
+            result.assert_outcomes(passed=3, skipped=0, failed=0)
+            result.stdout.fnmatch_lines(["mymodule.py*doctest] PASSED"])
+            dt_name = "doctest]"
+        result.stdout.fnmatch_lines([
+          "test_list_mymodule_fix_width.py*%s PASSED" % dt_name,
+          "test_list_mymodule_fix_width.py*test_one_to PASSED",
         ])
 
 
 class ATestDict(object):
     """
-    Abstract attributes: args, args_custom, src_conftest_custom, set3repr
+    Abstract attributes: args, args_conftest, src_conftest, args_mymodule,
+                         src_mymodule, set3repr
     """
     src_dict = '''
         """
@@ -175,14 +195,29 @@ class ATestDict(object):
             result.assert_outcomes(passed=0, skipped=0, failed=1)
             result.stdout.fnmatch_lines(["*doctest] FAILED"])
 
-    def test_sorted_dict_custom_fix_width(self, testdir):
-        testdir.makeconftest(self.src_conftest_custom)
+    def test_sorted_dict_conftest_fix_width(self, testdir):
+        testdir.makeconftest(self.src_conftest)
         testdir.makepyfile(self.src_dict_no_line_break % self.set3repr)
-        result = testdir.runpytest(*self.args_custom)
+        result = testdir.runpytest(*self.args_conftest)
         result.assert_outcomes(passed=2, skipped=0, failed=0)
         result.stdout.fnmatch_lines([
-          "*test_sorted_dict_custom_fix_width PASSED",
-          "*test_sorted_dict_custom_fix_width.upper PASSED",
+          "*test_sorted_dict_conftest_fix_width PASSED",
+          "*test_sorted_dict_conftest_fix_width.upper PASSED",
+        ] if SPLIT_DOCTEST else [
+          "*doctest] PASSED",
+          "*doctest] PASSED",
+        ])
+
+    def test_sorted_dict_mymodule_fix_width(self, testdir):
+        if sys.path[0] != "":
+            sys.path = [""] + sys.path
+        testdir.makepyfile(mymodule=self.src_mymodule)
+        testdir.makepyfile(self.src_dict_no_line_break % self.set3repr)
+        result = testdir.runpytest(*self.args_mymodule)
+        result.assert_outcomes(passed=2, skipped=0, failed=0)
+        result.stdout.fnmatch_lines([
+          "*test_sorted_dict_mymodule_fix_width PASSED",
+          "*test_sorted_dict_mymodule_fix_width.upper PASSED",
         ] if SPLIT_DOCTEST else [
           "*doctest] PASSED",
           "*doctest] PASSED",
@@ -191,7 +226,8 @@ class ATestDict(object):
 
 class ATestSet(object):
     """
-    Abstract attributes: args, args_custom, src_conftest_custom
+    Abstract attributes: args, args_conftest, src_conftest, args_mymodule,
+                         src_mymodule
     """
     src_set = '''
         """
@@ -246,14 +282,29 @@ class ATestSet(object):
             result.assert_outcomes(passed=0, skipped=0, failed=1)
             result.stdout.fnmatch_lines(["*doctest] FAILED"])
 
-    def test_sorted_set_custom_fix_width(self, testdir):
-        testdir.makeconftest(self.src_conftest_custom)
+    def test_sorted_set_conftest_fix_width(self, testdir):
+        testdir.makeconftest(self.src_conftest)
         testdir.makepyfile(self.src_set_no_line_break)
-        result = testdir.runpytest(*self.args_custom)
+        result = testdir.runpytest(*self.args_conftest)
         result.assert_outcomes(passed=2, skipped=0, failed=0)
         result.stdout.fnmatch_lines([
-          "*test_sorted_set_custom_fix_width PASSED",
-          "*test_sorted_set_custom_fix_width.union PASSED",
+          "*test_sorted_set_conftest_fix_width PASSED",
+          "*test_sorted_set_conftest_fix_width.union PASSED",
+        ] if SPLIT_DOCTEST else [
+          "*doctest] PASSED",
+          "*doctest] PASSED",
+        ])
+
+    def test_sorted_set_mymodule_fix_width(self, testdir):
+        if sys.path[0] != "":
+            sys.path = [""] + sys.path
+        testdir.makepyfile(mymodule=self.src_mymodule)
+        testdir.makepyfile(self.src_set_no_line_break)
+        result = testdir.runpytest(*self.args_mymodule)
+        result.assert_outcomes(passed=2, skipped=0, failed=0)
+        result.stdout.fnmatch_lines([
+          "*test_sorted_set_mymodule_fix_width PASSED",
+          "*test_sorted_set_mymodule_fix_width.union PASSED",
         ] if SPLIT_DOCTEST else [
           "*doctest] PASSED",
           "*doctest] PASSED",
@@ -267,10 +318,13 @@ class ATestPPrint(ATestList, ATestDict):
 class TestPPrintPFormatAsRepr(ATestPPrint):
     args = "--doctest-repr=pprint:pformat", "--verbose", "--doctest-modules"
 
-    args_custom = ("--doctest-repr", "conftest:doctest_pp.pformat",
-                   "--verbose", "--doctest-modules")
+    args_conftest = ("--doctest-repr", "conftest:doctest_pp.pformat",
+                     "--verbose", "--doctest-modules")
 
-    src_conftest_custom = '''
+    args_mymodule = ("--doctest-repr", "mymodule:doctest_pp.pformat",
+                     "--verbose", "--doctest-modules")
+
+    src_conftest = src_mymodule = '''
         import pprint
         doctest_pp = pprint.PrettyPrinter(width=150)
     '''
@@ -279,14 +333,19 @@ class TestPPrintPFormatAsRepr(ATestPPrint):
 class TestPPrintPPrintAsRepr(ATestPPrint):
     args = "--doctest-repr=pprint:pprint", "--verbose", "--doctest-modules"
 
-    args_custom = ("--doctest-repr", "conftest:doctest_pp.pprint",
-                   "--verbose", "--doctest-modules")
+    args_conftest = ("--doctest-repr", "conftest:doctest_pp.pprint",
+                     "--verbose", "--doctest-modules")
 
-    src_conftest_custom = '''
+    args_mymodule = ("--doctest-repr", "mymodule:doctest_pp.pprint",
+                     "--verbose", "--doctest-modules")
+
+    src_conftest = '''
         import pprint
         from pytest_doctest_custom import stdout_proxy
         doctest_pp = pprint.PrettyPrinter(width=150, stream=stdout_proxy)
     '''
+
+    src_mymodule = TestPPrintPFormatAsRepr.src_mymodule
 
 
 class ATestIPython(ATestList, ATestDict, ATestSet):
@@ -304,10 +363,13 @@ class TestIPythonPrettyAsRepr(ATestIPython):
     args = ("--doctest-repr=IPython.lib.pretty:pretty",
             "--verbose", "--doctest-modules")
 
-    args_custom = ("--doctest-repr", "conftest:doctest_pretty",
-                   "--verbose", "--doctest-modules")
+    args_conftest = ("--doctest-repr", "conftest:doctest_pretty",
+                     "--verbose", "--doctest-modules")
 
-    src_conftest_custom = '''
+    args_mymodule = ("--doctest-repr", "mymodule:doctest_pretty",
+                     "--verbose", "--doctest-modules")
+
+    src_conftest = src_mymodule = '''
         from IPython.lib.pretty import pretty
         def doctest_pretty(value):
             return pretty(value, max_width=150)
@@ -318,10 +380,13 @@ class TestIPythonPPrintAsRepr(ATestIPython):
     args = ("--doctest-repr=IPython.lib.pretty:pprint",
             "--verbose", "--doctest-modules")
 
-    args_custom = ("--doctest-repr", "conftest:doctest_pprint",
-                   "--verbose", "--doctest-modules")
+    args_conftest = ("--doctest-repr", "conftest:doctest_pprint",
+                     "--verbose", "--doctest-modules")
 
-    src_conftest_custom = '''
+    args_mymodule = ("--doctest-repr", "mymodule:doctest_pprint",
+                     "--verbose", "--doctest-modules")
+
+    src_conftest = src_mymodule = '''
         from IPython.lib.pretty import pprint
         def doctest_pprint(value):
             return pprint(value, max_width=150)
