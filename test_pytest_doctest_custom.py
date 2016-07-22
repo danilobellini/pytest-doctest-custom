@@ -260,10 +260,12 @@ class ATestSet(object):
         ])
 
 
-class TestPPrintAsRepr(ATestList, ATestDict):
-    args = "--doctest-repr=pprint:pformat", "--verbose", "--doctest-modules"
-
+class ATestPPrint(ATestList, ATestDict):
     set3repr = "set([3])" if PY2 else "{3}"
+
+
+class TestPPrintPFormatAsRepr(ATestPPrint):
+    args = "--doctest-repr=pprint:pformat", "--verbose", "--doctest-modules"
 
     args_custom = ("--doctest-repr", "conftest:doctest_pp.pformat",
                    "--verbose", "--doctest-modules")
@@ -274,11 +276,32 @@ class TestPPrintAsRepr(ATestList, ATestDict):
     '''
 
 
-class TestIPythonPrettyAsRepr(ATestList, ATestDict, ATestSet):
+class TestPPrintPPrintAsRepr(ATestPPrint):
+    args = "--doctest-repr=pprint:pprint", "--verbose", "--doctest-modules"
+
+    args_custom = ("--doctest-repr", "conftest:pp",
+                   "--verbose", "--doctest-modules")
+
+    src_conftest_custom = '''
+        import pprint
+        pp = lambda value: pprint.pprint(value, width=150)
+    '''
+
+
+class ATestIPython(ATestList, ATestDict, ATestSet):
+    set3repr = "{3}"
+    if PYPY: # Fix the undesired IPython replacement of the dict
+             # representation printer by the dictproxy one in PyPy, using the
+             # IPython dict pretty printer factory itself for such.
+        src_dict = ATestDict.src_dict + '''
+        from IPython.lib.pretty import _type_pprinters, _dict_pprinter_factory
+        _type_pprinters[dict] = _dict_pprinter_factory("{", "}", dict)
+        '''
+
+
+class TestIPythonPrettyAsRepr(ATestIPython):
     args = ("--doctest-repr=IPython.lib.pretty:pretty",
             "--verbose", "--doctest-modules")
-
-    set3repr = "{3}"
 
     args_custom = ("--doctest-repr", "conftest:doctest_pretty",
                    "--verbose", "--doctest-modules")
@@ -289,14 +312,19 @@ class TestIPythonPrettyAsRepr(ATestList, ATestDict, ATestSet):
             return pretty(value, max_width=150)
     '''
 
-    # Code to fix the undesired IPython replacement of the dict representation
-    # printer by the dictproxy one in PyPy, using the IPython dict pretty
-    # printer factory itself for such.
-    if PYPY:
-        src_dict = ATestDict.src_dict + '''
-        from IPython.lib.pretty import _type_pprinters, _dict_pprinter_factory
-        _type_pprinters[dict] = _dict_pprinter_factory("{", "}", dict)
-        '''
+
+class TestIPythonPPrintAsRepr(ATestIPython):
+    args = ("--doctest-repr=IPython.lib.pretty:pprint",
+            "--verbose", "--doctest-modules")
+
+    args_custom = ("--doctest-repr", "conftest:doctest_pprint",
+                   "--verbose", "--doctest-modules")
+
+    src_conftest_custom = '''
+        from IPython.lib.pretty import pprint
+        def doctest_pprint(value):
+            return pprint(value, max_width=150)
+    '''
 
 
 class TestReprAddress(object):

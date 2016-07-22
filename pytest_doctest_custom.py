@@ -16,7 +16,9 @@ except ImportError:
 def printer(value):
     """Prints the object representation using the given custom formatter."""
     if value is not None:
-        print(printer.repr(value))
+        representation = printer.repr(value)
+        if representation is not None: # Formatter or standard output printer?
+            print(representation)
 
 def temp_replace(obj, attr_name, value):
     """
