@@ -59,6 +59,18 @@ class PluginError(pytest.UsageError):
         msg = "[{0}] {1}".format(type(exc).__name__, exc)
         super(PluginError, self).__init__(msg)
 
+class StandardStreamProxy(object):
+    def __init__(self, name):
+        self.name = name
+    def __getattr__(self, attr_name):
+        return getattr(self.stream, attr_name)
+    @property
+    def stream(self):
+        return getattr(sys, self.name)
+
+stdout_proxy = StandardStreamProxy("stdout")
+stderr_proxy = StandardStreamProxy("stderr")
+
 @temp_replace(sys, "stdout", io.BytesIO())
 @temp_replace(sys, "stderr", io.BytesIO())
 @replace_exception((ImportError, AttributeError, ValueError), PluginError)

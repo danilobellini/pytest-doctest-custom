@@ -279,12 +279,13 @@ class TestPPrintPFormatAsRepr(ATestPPrint):
 class TestPPrintPPrintAsRepr(ATestPPrint):
     args = "--doctest-repr=pprint:pprint", "--verbose", "--doctest-modules"
 
-    args_custom = ("--doctest-repr", "conftest:pp",
+    args_custom = ("--doctest-repr", "conftest:doctest_pp.pprint",
                    "--verbose", "--doctest-modules")
 
     src_conftest_custom = '''
         import pprint
-        pp = lambda value: pprint.pprint(value, width=150)
+        from pytest_doctest_custom import stdout_proxy
+        doctest_pp = pprint.PrettyPrinter(width=150, stream=stdout_proxy)
     '''
 
 
