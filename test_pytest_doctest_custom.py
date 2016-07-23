@@ -413,7 +413,7 @@ class TestReprAddress(object):
         module = address_split.pop() if address_split else ""
         attr = attr_raw_split.pop()
         obj = attr_raw_split.pop() if attr_raw_split else "module"
-        keys = locals()
+        keys = {"module": module, "obj": obj, "attr": attr}
         keys.update(kws)
 
         result = td.runpytest(*args)
