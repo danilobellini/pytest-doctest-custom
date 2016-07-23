@@ -107,7 +107,7 @@ HELP = {
 def pytest_addoption(parser):
     """Hook that adds the plugin option for customizing the plugin."""
     group = parser.getgroup("doctest_custom", HELP["plugin"])
-    group.addoption("--doctest-repr", default="repr", help=HELP["repr"])
+    group.addoption("--doctest-repr", default=None, help=HELP["repr"])
 
 def pytest_configure(config):
     """
@@ -119,10 +119,12 @@ def pytest_configure(config):
     ``sys.__displayhook__`` and ``sys.displayhook`` are the plugin printer
     function while a doctest is running, restoring them back afterwards.
     """
-    import doctest
-    printer.repr = parse_address(config.option.doctest_repr)
-    enable_printer = temp_replace(sys, "__displayhook__", printer)
-    doctest.DocTestRunner.run = enable_printer(doctest.DocTestRunner.run)
+    doctest_repr = config.option.doctest_repr
+    if doctest_repr is not None:
+        import doctest
+        printer.repr = parse_address(doctest_repr)
+        enable_printer = temp_replace(sys, "__displayhook__", printer)
+        doctest.DocTestRunner.run = enable_printer(doctest.DocTestRunner.run)
     # As the public method doctest.DocTestRunner.run replaces sys.displayhook
     # by sys.__displayhook__, that's enough. We could also had changed the
     # displayhook on the _DocTestRunner__run protected method leaving the

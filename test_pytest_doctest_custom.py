@@ -468,6 +468,63 @@ class TestReprAddress(object):
             address = "os:sys:version")
 
 
+class TestPluginEnabled(object):
+    src = '''
+        """
+        >>> getattr(pytest_doctest_custom.printer, "repr", None) is repr
+        False
+        >>> sys.displayhook is pytest_doctest_custom.printer
+        False
+        """
+        import pytest_doctest_custom, sys
+        def test_displayhook():
+            assert sys.displayhook is not pytest_doctest_custom.printer
+        test_displayhook() # Tests for import time AssertionError
+    '''
+
+    def test_disabled(self, testdir):
+        testdir.makepyfile(self.src)
+        result = testdir.runpytest("--verbose", "--doctest-modules")
+        result.assert_outcomes(passed=2, skipped=0, failed=0)
+        result.stdout.fnmatch_lines([
+          "*test_disabled PASSED",
+          "*test_disabled*test_displayhook PASSED",
+        ] if SPLIT_DOCTEST else [
+          "*doctest] PASSED",
+          "*test_disabled*test_displayhook PASSED",
+        ])
+
+    def test_repr(self, testdir):
+        args = "--verbose", "--doctest-modules", "--doctest-repr=repr"
+        testdir.makepyfile(self.src.replace("False", "True"))
+        result = testdir.runpytest(*args)
+        result.assert_outcomes(passed=2, skipped=0, failed=0)
+        result.stdout.fnmatch_lines([
+          "*test_repr PASSED",
+          "*test_repr*test_displayhook PASSED",
+        ] if SPLIT_DOCTEST else [
+          "*doctest] PASSED",
+          "*test_repr*test_displayhook PASSED",
+        ])
+
+    def test_none(self, testdir):
+        args = "--verbose", "--doctest-modules", "--doctest-repr=None"
+        exc_msg = "*TypeError*'NoneType' object is not callable*"
+        testdir.makepyfile(self.src)
+        result = testdir.runpytest(*args)
+        result.assert_outcomes(passed=1, skipped=0, failed=1)
+        result.stdout.fnmatch_lines([
+          "*test_none FAILED" if SPLIT_DOCTEST else "*doctest] FAILED",
+          "*test_none*test_displayhook PASSED",
+          "*FAILURES*",
+          "*doctest*",
+          "*" + self.src[:self.src.find("\n")].strip(), # 1st src line
+          "UNEXPECTED EXCEPTION*" + exc_msg,
+          exc_msg,
+        ])
+        assert result.stderr.str().strip() == ""
+
+
 def test_help_message(testdir):
     testdir.runpytest("--help").stdout.fnmatch_lines([
       pytest_doctest_custom.HELP["plugin"].join("*:"),
