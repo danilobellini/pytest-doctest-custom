@@ -1,6 +1,16 @@
 pytest-doctest-custom
 =====================
 
+.. list-table::
+  :stub-columns: 1
+
+  * - Development
+    - |travis| |coveralls|
+  * - Last release
+    - |v| |pyversions| |implementation|
+  * - PyPI status
+    - |dm| |format| |status| |l|
+
 A py.test plugin for customizing string representations of doctest results.
 
 
@@ -144,3 +154,48 @@ Or setup.py directly::
 ----
 
 Copyright (C) 2016 Danilo de Jesus da Silva Bellini
+
+.. |travis| image::
+  https://img.shields.io/travis/danilobellini/pytest-doctest-custom/master.svg
+  :target: https://travis-ci.org/danilobellini/pytest-doctest-custom
+  :alt: Travis CI builds
+
+.. |coveralls| image::
+  https://img.shields.io/coveralls/danilobellini/pytest-doctest-custom/master.svg
+  :target: https://coveralls.io/r/danilobellini/pytest-doctest-custom
+  :alt: Coveralls coverage report (pytest>=2.8.0)
+
+.. |v| image::
+  https://img.shields.io/pypi/v/pytest-doctest-custom.svg
+  :target: https://pypi.python.org/pypi/pytest-doctest-custom
+  :alt: Last stable version (PyPI)
+
+.. |pyversions| image::
+  https://img.shields.io/pypi/pyversions/pytest-doctest-custom.svg
+  :target: https://pypi.python.org/pypi/pytest-doctest-custom
+  :alt: Python versions (PyPI)
+
+.. |implementation| image::
+  https://img.shields.io/pypi/implementation/pytest-doctest-custom.svg
+  :target: https://pypi.python.org/pypi/pytest-doctest-custom
+  :alt: Python implementations (PyPI)
+
+.. |dm| image::
+  https://img.shields.io/pypi/dm/pytest-doctest-custom.svg
+  :target: https://pypi.python.org/pypi/pytest-doctest-custom
+  :alt: Downloads (PyPI)
+
+.. |format| image::
+  https://img.shields.io/pypi/format/pytest-doctest-custom.svg
+  :target: https://pypi.python.org/pypi/pytest-doctest-custom
+  :alt: Distribution format (PyPI)
+
+.. |status| image::
+  https://img.shields.io/pypi/status/pytest-doctest-custom.svg
+  :target: https://pypi.python.org/pypi/pytest-doctest-custom
+  :alt: Project status (PyPI)
+
+.. |l| image::
+  https://img.shields.io/pypi/l/pytest-doctest-custom.svg
+  :target: https://pypi.python.org/pypi/pytest-doctest-custom
+  :alt: License (PyPI)

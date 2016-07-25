@@ -16,7 +16,7 @@ metadata = {
 fname_readme = os.path.join(os.path.dirname(__file__), "README.rst")
 with open(fname_readme, "r") as f:
     metadata["long_description"] = rdata = f.read()
-    metadata["description"] = rdata.split("\n\n", 2)[1]
+    metadata["description"] = rdata.split("\n\n")[3]
 
 metadata["classifiers"] = """
 Development Status :: 2 - Pre-Alpha
