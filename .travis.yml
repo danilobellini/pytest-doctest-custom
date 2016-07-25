@@ -27,4 +27,4 @@ install: pip install tox
 
 before_script: PY=$(python -V 2>&1 | sed 's/[^0-9]//g;s/.//3g;2s/.*/py/;$!d')
 
-script: tox -e py$PY-pytest${PYTEST//./}
+script: tox -e py$PY-pytest${PYTEST//./}-travis
