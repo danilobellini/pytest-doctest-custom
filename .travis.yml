@@ -1,0 +1,30 @@
+language: python
+
+sudo: false
+
+python:
+- nightly
+- 3.5
+- 3.4
+- 3.3
+- 2.7
+- 2.6
+- pypy
+
+env:
+- PYTEST=2.9.2
+- PYTEST=2.9.1
+- PYTEST=2.9.0
+- PYTEST=2.8.7
+- PYTEST=2.8.6
+- PYTEST=2.8.5
+
+matrix:
+  allow_failures:
+  - python: nightly
+
+install: pip install tox
+
+before_script: PY=$(python -V 2>&1 | sed 's/[^0-9]//g;s/.//3g;2s/.*/py/;$!d')
+
+script: tox -e py$PY-pytest${PYTEST//./}

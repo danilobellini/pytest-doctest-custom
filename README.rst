@@ -8,7 +8,8 @@ What does it do?
 ----------------
 
 Change the display hook used by doctest to render the object representations.
-Tested on CPython 2.6+, 3.3+ and PyPy, using py.test 2.1+.
+Tested on CPython 2.6+, 3.3+ and PyPy, using py.test 2.1+ (2.8.5+ in Travis
+CI), but might work with other versions as well.
 
 For a given code with doctests, you can run::
 
