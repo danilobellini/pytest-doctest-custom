@@ -15,7 +15,7 @@ def not_eq(value):
     """Partial evaluation of ``!=`` for currying"""
     return lambda el: el != value
 
-def get_block(name, data):
+def get_block(name, data, newline="\n"):
     """
     Joined multiline string block from a list of strings data. The
     BLOCK_START and BLOCK_END delimiters are selected with the given
@@ -23,9 +23,9 @@ def get_block(name, data):
     """
     lines = itertools.dropwhile(not_eq(BLOCK_START % name), data)
     next(lines) # Skip the start line, raise an error if there's no start line
-    return "\n".join(itertools.takewhile(not_eq(BLOCK_END % name), lines))
+    return newline.join(itertools.takewhile(not_eq(BLOCK_END % name), lines))
 
-def all_but_block(name, data, remove_empty_next=True):
+def all_but_block(name, data, newline="\n", remove_empty_next=True):
     """
     Joined multiline string from a list of strings data, removing a
     block with the given name and its delimiters. Removes the empty
@@ -35,12 +35,12 @@ def all_but_block(name, data, remove_empty_next=True):
     before = list(itertools.takewhile(not_eq(BLOCK_START % name), it))
     after = list(itertools.dropwhile(not_eq(BLOCK_END % name), it))[1:]
     if remove_empty_next and after and after[0].strip() == "":
-        return "\n".join(before + after[1:])
-    return "\n".join(before + after)
+        return newline.join(before + after[1:])
+    return newline.join(before + after)
 
-def single_line(data):
+def single_line(value):
     """Returns the given string joined to a single line and trimmed."""
-    return data.strip().replace("\n", " ")
+    return " ".join(filter(None, map(str.strip, value.splitlines())))
 
 def get_assignment(fname, varname):
     """
@@ -57,8 +57,8 @@ def get_assignment(fname, varname):
 metadata = {
   "name": "pytest-doctest-custom",
   "version": get_assignment(MODULE_FILE, "__version__"),
-  "author": "Danilo J. S. Bellini",
-  "author_email": "danilo.bellini.gmail.com",
+  "author": "Danilo de Jesus da Silva Bellini",
+  "author_email": "danilo.bellini@gmail.com",
   "url": "http://github.com/danilobellini/pytest-doctest-custom",
   "description": single_line(get_block("summary", README)),
   "long_description": all_but_block("summary", README),
@@ -69,7 +69,7 @@ metadata = {
 }
 
 metadata["classifiers"] = """
-Development Status :: 2 - Pre-Alpha
+Development Status :: 4 - Beta
 Framework :: Pytest
 Intended Audience :: Developers
 License :: OSI Approved :: MIT License

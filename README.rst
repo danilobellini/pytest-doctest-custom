@@ -41,7 +41,9 @@ you can just remove the ``module:`` prefix.
 
 You can also also use a printer callable that always returns ``None`` but
 writes its result to some stream/file. In this case you should use this
-package ``stdout_proxy``::
+package ``stdout_proxy``:
+
+.. code-block:: python
 
   # mymodule.py
   from pytest_doctest_custom import stdout_proxy
@@ -70,7 +72,9 @@ or be explicit about the output stream for the printer callable (it should be
 
 To use this one, you need to have IPython installed on the testing
 environment (e.g. including ``ipython`` in the tox deps list). A possible
-tox.ini file for running toctests on a project would be::
+tox.ini file for running toctests on a project would be:
+
+.. code-block:: ini
 
   [tox]
   envlist = py{35,34,27}

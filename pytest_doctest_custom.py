@@ -2,7 +2,7 @@
 # By Danilo J. S. Bellini
 import sys, functools, pytest
 
-__version__ = "0.1.0.dev0"
+__version__ = "1.0.0"
 
 # Compatibility stuff
 try:
@@ -106,7 +106,7 @@ def parse_address(address):
     return functools.reduce(getattr, func_name.split("."), module)
 
 HELP = {
-  "plugin": "Customizing the display hook for doctests",
+  "plugin": "custom display hook for doctests",
   "repr": "MODULE:CALLABLE address to a representation formatter or printer "
           "(e.g. IPython.lib.pretty:pretty, pprint:pformat, ascii, repr)",
 }
