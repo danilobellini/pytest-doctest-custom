@@ -2,6 +2,8 @@
 # By Danilo J. S. Bellini
 import sys, functools, pytest
 
+__version__ = "0.1.0.dev0"
+
 # Compatibility stuff
 try:
     import builtins # Python 3

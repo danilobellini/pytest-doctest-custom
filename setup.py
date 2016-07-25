@@ -1,10 +1,13 @@
 #!/usr/bin/env python
-import os, setuptools, itertools
+import os, setuptools, itertools, ast
 
 BLOCK_START = ".. %s"
 BLOCK_END = ".. %s end"
 
-with open(os.path.join(os.path.dirname(__file__), "README.rst"), "r") as f:
+PKG_DIR = os.path.dirname(__file__)
+MODULE_FILE = os.path.join(PKG_DIR, "pytest_doctest_custom.py")
+
+with open(os.path.join(PKG_DIR, "README.rst"), "r") as f:
     README = f.read().splitlines()
 
 def not_eq(value):
@@ -26,9 +29,16 @@ def all_but_block(name, data, remove_empty_next=True):
 def single_line(data):
     return data.strip().replace("\n", " ")
 
+def get_assignment(fname, varname):
+    with open(fname, "r") as f:
+        for n in ast.parse(f.read(), filename=fname).body:
+            if isinstance(n, ast.Assign) and len(n.targets) == 1 \
+                                         and n.targets[0].id == varname:
+                return eval(compile(ast.Expression(n.value), fname, "eval"))
+
 metadata = {
   "name": "pytest-doctest-custom",
-  "version": "0.1.0",
+  "version": get_assignment(MODULE_FILE, "__version__"),
   "author": "Danilo J. S. Bellini",
   "author_email": "danilo.bellini.gmail.com",
   "url": "http://github.com/danilobellini/pytest-doctest-custom",
