@@ -507,6 +507,24 @@ class TestPluginEnabled(object):
           "*test_repr*test_displayhook PASSED",
         ])
 
+    def test_print(self, testdir, here):
+        if PY2:
+            testdir.makepyfile(p="def p(value): print(value)")
+            args = "--verbose", "--doctest-modules", "--doctest-repr=p:p"
+            extra = [] if SPLIT_DOCTEST else ["*doctest] PASSED"]
+            passed = 3 - SPLIT_DOCTEST
+        else:
+            args = "--verbose", "--doctest-modules", "--doctest-repr=print"
+            extra = []
+            passed = 2
+        testdir.makepyfile("True".join(self.src.rpartition("False")[::2]))
+        result = testdir.runpytest(*args)
+        result.assert_outcomes(passed=passed, skipped=0, failed=0)
+        result.stdout.fnmatch_lines(extra + [
+          "*test_print PASSED" if SPLIT_DOCTEST else "*doctest] PASSED",
+          "*test_print*test_displayhook PASSED",
+        ])
+
     def test_none(self, testdir):
         args = "--verbose", "--doctest-modules", "--doctest-repr=None"
         exc_msg = "*TypeError*'NoneType' object is not callable*"
@@ -523,6 +541,32 @@ class TestPluginEnabled(object):
           exc_msg,
         ])
         assert result.stderr.str().strip() == ""
+
+
+class TestDoctestOutputsNone(object):
+    src = '''
+        """
+        >>> None
+        >>> 2 + 2
+        4
+        >>> print("Returns None")
+        Returns None
+        """
+        from __future__ import print_function
+        print = print
+    '''
+
+    def test_print_as_repr(self, testdir, here):
+        testdir.makepyfile(self.src)
+        arg = "test_print_as_repr:print" if PY2 else "print"
+        result = testdir.runpytest("--verbose", "--doctest-modules",
+                                   "--doctest-repr", arg)
+        result.assert_outcomes(passed=1, skipped=0, failed=0)
+        result.stdout.fnmatch_lines([
+          "*test_print_as_repr PASSED"
+          if SPLIT_DOCTEST else
+          "*doctest] PASSED",
+        ])
 
 
 def test_help_message(testdir):
