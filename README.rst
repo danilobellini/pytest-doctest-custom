@@ -11,7 +11,11 @@ pytest-doctest-custom
   * - PyPI status
     - |dm| |format| |status| |l|
 
+.. summary
+
 A py.test plugin for customizing string representations of doctest results.
+
+.. summary end
 
 
 What does it do?
