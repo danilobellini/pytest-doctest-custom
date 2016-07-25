@@ -57,11 +57,16 @@ def replace_exception(raised, to_raise):
     return decorator
 
 class PluginError(pytest.UsageError):
+    """General pytest-doctest-custom plugin usage/invocation error."""
     def __init__(self, exc):
         msg = "[{0}] {1}".format(type(exc).__name__, exc)
         super(PluginError, self).__init__(msg)
 
 class StandardStreamProxy(object):
+    """
+    Proxy class that grants deferred access to stream objects like
+    ``sys.stdout``, allowing the replacement of the underlying stream.
+    """
     def __init__(self, name):
         self._name = name
 

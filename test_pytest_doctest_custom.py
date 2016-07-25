@@ -1,3 +1,4 @@
+"""Test suite for the pytest-doctest-custom plugin."""
 import re, os, sys, pytest, pytest_doctest_custom
 
 pytest_plugins = "pytester"  # Enables the testdir fixture
