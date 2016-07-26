@@ -2,7 +2,7 @@
 # By Danilo J. S. Bellini
 import sys, functools, pytest
 
-__version__ = "1.0.0"
+__version__ = "1.1.0.dev"
 
 # Compatibility stuff
 try:

@@ -39,7 +39,7 @@ object, returns a string with its representation. It should be passed as the
 dots for nested modules/objects. For built-ins like the ``ascii`` function,
 you can just remove the ``module:`` prefix.
 
-You can also also use a printer callable that always returns ``None`` but
+You can also use a printer callable that always returns ``None`` but
 writes its result to some stream/file. In this case you should use this
 package ``stdout_proxy``:
 
@@ -63,12 +63,12 @@ methods/functions instead of printing ones, as printer objects commonly
 assigns themselves to ``sys.stdout`` on initialization and the doctest runner
 collects printed data by shortly mocking such stream. This package temporarily
 changes the ``sys`` output/error streams while it finds the addressed
-callable, but that's not enough if the package had already been imported
+callable, but that's not enough if the module had already been imported
 (like ``conftest.py``). When possible, use a representation formatter callable
 or be explicit about the output stream for the printer callable (it should be
 ``pytest_doctest_custom.stdout_proxy``).
 
-* *IPython Pretty Printer* (for output, without the "Out[#]:" prefix)
+* *IPython "pretty" module* (for output, without the "Out[#]:" prefix)
 
 To use this one, you need to have IPython installed on the testing
 environment (e.g. including ``ipython`` in the tox deps list). A possible
@@ -104,7 +104,7 @@ adding this to the ``conftest.py`` module and calling py.test with
 This pretty printer sorts sets, frozensets and dicts (by keys), breaks lines
 with fixed indentation, and has a consistent set/frozenset printing result for
 testing on both Python 2 and 3 (CPython 2.7 and 3.3+). But it's not a Python
-standard library, such printer need IPython as a requirement for running the
+standard library, such printer needs IPython as a requirement for running
 tests, which comes with much more stuff, not just the pretty printer.
 In Python 2.6 you need to ensure that the IPython version is compatible (e.g.
 with ``deps = ipython<2`` in your ``tox.ini``).
@@ -119,11 +119,12 @@ derivative like ``type("dictproxy", (dict,), {})`` reloading the
 ``IPython.lib.pretty`` dict representation printer by assigning back its
 ``_dict_pprinter_factory("{", "}", dict)`` to its ``_type_pprinters[dict]``.
 
-* *Python Standard Library Pretty Printer*
+* *Python "pprint" module* (Standard Library)
 
 You can use the ``pprint.pformat`` function directly with
-``--doctest-repr=ppretty:pformat``. You can't directly use the ``pprint``
-method from ``pprint.PrettyPrinter`` objects.
+``--doctest-repr=ppretty:pformat``. You shouldn't directly use the ``pprint``
+method from ``pprint.PrettyPrinter`` objects unless the stream was properly
+set to ``stdout_proxy``.
 
 To customize its parameters such as ``width`` and ``indent``, you can put a
 ``PrettyPrinter`` object in your code, for example:
