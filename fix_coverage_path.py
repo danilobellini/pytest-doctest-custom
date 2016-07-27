@@ -17,5 +17,10 @@ old_cd = CoverageData()
 old_cd.read_file(coverage_file_name)
 
 new_cd = CoverageData()
-new_cd.update(old_cd, pa)
+try:
+    new_cd.update(old_cd, pa)
+except AttributeError: # Coverage 3.7.1 (CPython 3.2)
+    namer = lambda f: os.path.abspath(os.path.expanduser(pa.map(f)))
+    new_cd.lines = dict((namer(f), d) for f, d in old_cd.lines.items())
+    new_cd.arcs = dict((namer(f), d) for f, d in old_cd.arcs.items())
 new_cd.write_file(coverage_file_name)

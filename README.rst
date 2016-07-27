@@ -22,7 +22,7 @@ What does it do?
 ----------------
 
 Change the display hook used by doctest to render the object representations.
-Tested on CPython 2.6+, 3.3+ and PyPy, using py.test 2.1+ (2.8.5+ in Travis
+Tested on CPython 2.6+, 3.2+ and PyPy, using py.test 2.1+ (2.8.5+ in Travis
 CI), but might work with other versions as well.
 
 For a given code with doctests, you can run::
@@ -106,8 +106,8 @@ with fixed indentation, and has a consistent set/frozenset printing result for
 testing on both Python 2 and 3 (CPython 2.7 and 3.3+). But it's not a Python
 standard library, such printer needs IPython as a requirement for running
 tests, which comes with much more stuff, not just the pretty printer.
-In Python 2.6 you need to ensure that the IPython version is compatible (e.g.
-with ``deps = ipython<2`` in your ``tox.ini``).
+In CPython 2.6/3.2 you need to ensure that the IPython version is compatible
+(e.g. with ``deps = ipython<2`` in your ``tox.ini``).
 
 In PyPy that representation printer shows any dict as a dictproxy (tested with
 IPython 5.0.0, PyPy 5.3.1) because they're all the same and the dict printer
