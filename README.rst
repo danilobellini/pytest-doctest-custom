@@ -22,8 +22,8 @@ What does it do?
 ----------------
 
 Change the display hook used by doctest to render the object representations.
-Tested on CPython 2.6+, 3.2+ and PyPy, using py.test 2.1+ (2.8.5+ in Travis
-CI), but might work with other versions as well.
+Tested on CPython 2.6+/3.2+, PyPy and Jython 2.7.0, all using py.test 2.1+
+(2.8.5+ for the CI service; 2.2.4+ for Jython).
 
 For a given code with doctests, you can run::
 
@@ -119,6 +119,8 @@ derivative like ``type("dictproxy", (dict,), {})`` reloading the
 ``IPython.lib.pretty`` dict representation printer by assigning back its
 ``_dict_pprinter_factory("{", "}", dict)`` to its ``_type_pprinters[dict]``.
 
+IPython isn't compatible with Jython.
+
 * *Python "pprint" module* (Standard Library)
 
 You can use the ``pprint.pformat`` function directly with
@@ -144,8 +146,8 @@ custom indentation size, but several containers have a result that depends on
 the Python version (e.g. empty set as ``"set()"`` in Python 2.6 and 3 but as
 ``set([])`` in Python 2.7, single item set as ``{item}`` in Python 3 but as
 ``set([item])`` in Python 2). On the other hand, this is a Python standard
-library, there's no extra requirement for tests, and behaves in PyPy as it
-does in CPython.
+library, there's no extra requirement for tests, and behaves in PyPy and
+Jython as it does in CPython.
 
 
 Installing

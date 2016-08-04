@@ -21,6 +21,19 @@ env:
 - PYTEST=2.8.5
 
 matrix:
+  include:
+  - env: JYTHON=2.7.0; PYTEST=2.9.2
+    python: 2.7
+  - env: JYTHON=2.7.0; PYTEST=2.9.1
+    python: 2.7
+  - env: JYTHON=2.7.0; PYTEST=2.9.0
+    python: 2.7
+  - env: JYTHON=2.7.0; PYTEST=2.8.7
+    python: 2.7
+  - env: JYTHON=2.7.0; PYTEST=2.8.6
+    python: 2.7
+  - env: JYTHON=2.7.0; PYTEST=2.8.5
+    python: 2.7
   allow_failures:
   - python: nightly
 
@@ -28,9 +41,22 @@ before_install:
 - PY=$(python -V 2>&1 | sed 's/[^0-9]//g;s/.//3g;2s/.*/py/;$!d')
 - test $PY == 32 && TOX='virtualenv<14 tox' || TOX=tox
 - export TOXENV=py$PY-pytest${PYTEST//./}-travis
+- |
+  if [ $JYTHON ] ; then
+    export TOXENV=jython-pytest${PYTEST//./}
+    # Installs Jython
+    JAR_PATH=org/python/jython-installer/$JYTHON/jython-installer-$JYTHON.jar
+    URL=http://search.maven.org/remotecontent?filepath=$JAR_PATH
+    curl -L $URL -o /tmp/$(basename $JAR_PATH)
+    java -jar /tmp/$(basename $JAR_PATH) -s -t minimum -i mod -d /tmp/jython
+    PATH="/tmp/jython/bin:$PATH"
+  fi
 
 install:
 - pip install $TOX
 - tox --notest
+
+before_script:
+- test $JYTHON && jython -V || python -V
 
 script: tox

@@ -1,11 +1,19 @@
 """Test suite for the pytest-doctest-custom plugin."""
-import re, os, sys, pytest, pytest_doctest_custom
+import re, os, sys, platform, pytest, pytest_doctest_custom
 
 pytest_plugins = "pytester"  # Enables the testdir fixture
 
-PYPY = any(k.startswith("pypy") for k in dir(sys))
+PYPY = platform.python_implementation() == "PyPy"
+JYTHON = platform.python_implementation() == "Jython"
 PY2 = sys.version_info[0] == 2
 SPLIT_DOCTEST = pytest.__version__ >= "2.4"
+
+# Avoid py._path.local.LocalPath.pyimport from raising
+# ImportMismatchError when --runpytest=subprocess
+JYTHON_FIX = '''
+        from os.path import basename
+        __file__ = basename(__file__) # it was __pyclasspath__/test_*.py
+'''
 
 
 @pytest.fixture
@@ -339,6 +347,9 @@ class TestPPrintPFormatAsRepr(ATestPPrint):
         doctest_pp = pprint.PrettyPrinter(width=150)
     '''
 
+    if JYTHON and not SPLIT_DOCTEST:
+       src_mymodule += JYTHON_FIX
+
 
 class TestPPrintPPrintAsRepr(ATestPPrint):
     args = "--doctest-repr=pprint:pprint", "--verbose", "--doctest-modules"
@@ -358,6 +369,7 @@ class TestPPrintPPrintAsRepr(ATestPPrint):
     src_mymodule = TestPPrintPFormatAsRepr.src_mymodule
 
 
+@pytest.mark.skipif(JYTHON, reason="IPython doesn't run on Jython")
 class ATestIPython(ATestList, ATestDict, ATestSet):
     set3repr = "{3}"
     if PYPY: # Fix the undesired IPython replacement of the dict
@@ -510,7 +522,8 @@ class TestPluginEnabled(object):
 
     def test_print(self, testdir, here):
         if PY2:
-            testdir.makepyfile(p="def p(value): print(value)")
+            testdir.makepyfile(p="        def p(value): print(value)" + \
+                                 JYTHON_FIX * (JYTHON and not SPLIT_DOCTEST))
             args = "--verbose", "--doctest-modules", "--doctest-repr=p:p"
             extra = [] if SPLIT_DOCTEST else ["*doctest] PASSED"]
             passed = 3 - SPLIT_DOCTEST
@@ -557,6 +570,9 @@ class TestDoctestOutputsNone(object):
         print = print
     '''
 
+    if JYTHON:
+       src += JYTHON_FIX
+
     def test_print_as_repr(self, testdir, here):
         testdir.makepyfile(self.src)
         arg = "test_print_as_repr:print" if PY2 else "print"
@@ -581,5 +597,6 @@ def test_help_message(testdir):
 def test_tox_python_pytest_versions():
     """Meta-test to ensure Python and py.test versions are correct."""
     py_ver, pytest_ver = os.environ["TOXENV"].split("-")[:2]
-    assert py_ver == ("pypy" if PYPY else ("py%d%d" % sys.version_info[:2]))
+    assert py_ver == platform.python_implementation().lower() \
+                     .replace("cpython", "py{0}{1}".format(*sys.version_info))
     assert pytest_ver == "pytest" + pytest.__version__.replace(".", "")
