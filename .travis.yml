@@ -40,10 +40,10 @@ matrix:
 before_install:
 - PY=$(python -V 2>&1 | sed 's/[^0-9]//g;s/.//3g;2s/.*/py/;$!d')
 - test $PY == 32 && TOX='virtualenv<14 tox' || TOX=tox
-- export TOXENV=py$PY-pytest${PYTEST//./}-travis
+- export TOXENV=py$PY-pytest${PYTEST//./}-cov-coveralls
 - |
   if [ $JYTHON ] ; then
-    export TOXENV=jython-pytest${PYTEST//./}
+    export TOXENV=jython-pytest${PYTEST//./}-nocov
     # Installs Jython
     JAR_PATH=org/python/jython-installer/$JYTHON/jython-installer-$JYTHON.jar
     URL=http://search.maven.org/remotecontent?filepath=$JAR_PATH
