@@ -10,8 +10,6 @@ python:
 - 3.2
 - 2.7
 - 2.6
-- pypy
-- pypy3
 
 env:
 - PYTEST=2.9.2
@@ -35,11 +33,109 @@ matrix:
     python: 2.7
   - env: JYTHON=2.7.0; PYTEST=2.8.5
     python: 2.7
+
+  - env: PYPY=pypy3.3-v5.2.0-alpha1; PYTEST=2.9.2
+    python: 3.3
+  - env: PYPY=pypy3.3-v5.2.0-alpha1; PYTEST=2.9.1
+    python: 3.3
+  - env: PYPY=pypy3.3-v5.2.0-alpha1; PYTEST=2.9.0
+    python: 3.3
+  - env: PYPY=pypy3.3-v5.2.0-alpha1; PYTEST=2.8.7
+    python: 3.3
+  - env: PYPY=pypy3.3-v5.2.0-alpha1; PYTEST=2.8.6
+    python: 3.3
+  - env: PYPY=pypy3.3-v5.2.0-alpha1; PYTEST=2.8.5
+    python: 3.3
+
+  - env: PYPY=pypy3-2.4.0; PYTEST=2.9.2
+    python: 3.2
+  - env: PYPY=pypy3-2.4.0; PYTEST=2.9.1
+    python: 3.2
+  - env: PYPY=pypy3-2.4.0; PYTEST=2.9.0
+    python: 3.2
+  - env: PYPY=pypy3-2.4.0; PYTEST=2.8.7
+    python: 3.2
+  - env: PYPY=pypy3-2.4.0; PYTEST=2.8.6
+    python: 3.2
+  - env: PYPY=pypy3-2.4.0; PYTEST=2.8.5
+    python: 3.2
+
+  - env: PYPY=pypy2-v5.3.1; PYTEST=2.9.2
+    python: 2.7
+  - env: PYPY=pypy2-v5.3.1; PYTEST=2.9.1
+    python: 2.7
+  - env: PYPY=pypy2-v5.3.1; PYTEST=2.9.0
+    python: 2.7
+  - env: PYPY=pypy2-v5.3.1; PYTEST=2.8.7
+    python: 2.7
+  - env: PYPY=pypy2-v5.3.1; PYTEST=2.8.6
+    python: 2.7
+  - env: PYPY=pypy2-v5.3.1; PYTEST=2.8.5
+    python: 2.7
+
+  - env: PYPY=pypy-4.0.1; PYTEST=2.9.2
+    python: 2.7
+  - env: PYPY=pypy-4.0.1; PYTEST=2.9.1
+    python: 2.7
+  - env: PYPY=pypy-4.0.1; PYTEST=2.9.0
+    python: 2.7
+  - env: PYPY=pypy-4.0.1; PYTEST=2.8.7
+    python: 2.7
+  - env: PYPY=pypy-4.0.1; PYTEST=2.8.6
+    python: 2.7
+  - env: PYPY=pypy-4.0.1; PYTEST=2.8.5
+    python: 2.7
+
+  - env: PYPY=pypy-2.6.1; PYTEST=2.9.2
+    python: 2.7
+  - env: PYPY=pypy-2.6.1; PYTEST=2.9.1
+    python: 2.7
+  - env: PYPY=pypy-2.6.1; PYTEST=2.9.0
+    python: 2.7
+  - env: PYPY=pypy-2.6.1; PYTEST=2.8.7
+    python: 2.7
+  - env: PYPY=pypy-2.6.1; PYTEST=2.8.6
+    python: 2.7
+  - env: PYPY=pypy-2.6.1; PYTEST=2.8.5
+    python: 2.7
+
+  - env: PYPY=pypy-stm-2.5.1; PYTEST=2.9.2
+    python: 2.7
+  - env: PYPY=pypy-stm-2.5.1; PYTEST=2.9.1
+    python: 2.7
+  - env: PYPY=pypy-stm-2.5.1; PYTEST=2.9.0
+    python: 2.7
+  - env: PYPY=pypy-stm-2.5.1; PYTEST=2.8.7
+    python: 2.7
+  - env: PYPY=pypy-stm-2.5.1; PYTEST=2.8.6
+    python: 2.7
+  - env: PYPY=pypy-stm-2.5.1; PYTEST=2.8.5
+    python: 2.7
+
   allow_failures:
   - python: nightly
-  - python: pypy3
+  - env: PYPY=pypy3.3-v5.2.0-alpha1; PYTEST=2.9.2
+  - env: PYPY=pypy3.3-v5.2.0-alpha1; PYTEST=2.9.1
+  - env: PYPY=pypy3.3-v5.2.0-alpha1; PYTEST=2.9.0
+  - env: PYPY=pypy3.3-v5.2.0-alpha1; PYTEST=2.8.7
+  - env: PYPY=pypy3.3-v5.2.0-alpha1; PYTEST=2.8.6
+  - env: PYPY=pypy3.3-v5.2.0-alpha1; PYTEST=2.8.5
 
 before_install:
+- |
+  if [ $PYPY ] ; then
+    # Basic tools for virtualenv creation (required e.g. for PyPy3)
+    TO_UPGRADE="virtualenv pip wheel setuptools"
+    test $TRAVIS_PYTHON_VERSION == 3.2 || pip install $TO_UPGRADE --upgrade
+    # Installs PyPy/PyPy3/PyPySTM
+    URL=https://bitbucket.org/pypy/pypy/downloads/$PYPY-linux64.tar.bz2
+    curl -L $URL | tar xjf - --xform="s_$PYPY-linux64_pypy_" -C /tmp
+    # Activates it as a virtualenv (with pip/setuptools/wheel)
+    find /tmp/pypy/bin/pypy* -type f -exec virtualenv /tmp/venv -p '{}' \;
+    source /tmp/venv/bin/activate
+    # tox requires a "pypy3" executable (Reminds Travis CI issue #6304)
+    ln -s /tmp/venv/bin/python /tmp/venv/bin/pypy3
+  fi
 - PY=$(python -V 2>&1 | sed 's/[^0-9]//g;s/.//3g;2s/.*/py/;1!G;h;$!d;s/y.2./y/;s/y.3./y3/')
 - test $PY == 32 && TOX='virtualenv<14 tox' || TOX=tox
 - export TOXENV=py$PY-pytest${PYTEST//./}-cov-coveralls

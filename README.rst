@@ -17,13 +17,15 @@ A py.test plugin for customizing string representations of doctest results.
 
 .. summary end
 
+Tested on CPython 2.6+/3.2+, PyPy (2, 4 and 5), PyPy3 (2 and 5), PyPy-STM
+2.5.1 and Jython 2.7.0, using py.test 2.1+ (2.8.5+ for the CI service; 2.2.4+
+for Jython).
+
 
 What does it do?
 ----------------
 
 Change the display hook used by doctest to render the object representations.
-Tested on CPython 2.6+/3.2+, PyPy, PyPy3 and Jython 2.7.0, using py.test 2.1+
-(2.8.5+ for the CI service; 2.2.4+ for Jython).
 
 For a given code with doctests, you can run::
 
