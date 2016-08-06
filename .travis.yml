@@ -11,6 +11,7 @@ python:
 - 2.7
 - 2.6
 - pypy
+- pypy3
 
 env:
 - PYTEST=2.9.2
@@ -36,9 +37,10 @@ matrix:
     python: 2.7
   allow_failures:
   - python: nightly
+  - python: pypy3
 
 before_install:
-- PY=$(python -V 2>&1 | sed 's/[^0-9]//g;s/.//3g;2s/.*/py/;$!d')
+- PY=$(python -V 2>&1 | sed 's/[^0-9]//g;s/.//3g;2s/.*/py/;1!G;h;$!d;s/y.2./y/;s/y.3./y3/')
 - test $PY == 32 && TOX='virtualenv<14 tox' || TOX=tox
 - export TOXENV=py$PY-pytest${PYTEST//./}-cov-coveralls
 - |

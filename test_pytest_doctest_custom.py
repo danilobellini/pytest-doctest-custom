@@ -597,6 +597,10 @@ def test_help_message(testdir):
 def test_tox_python_pytest_versions():
     """Meta-test to ensure Python and py.test versions are correct."""
     py_ver, pytest_ver = os.environ["TOXENV"].split("-")[:2]
-    assert py_ver == platform.python_implementation().lower() \
-                     .replace("cpython", "py{0}{1}".format(*sys.version_info))
+    if PYPY:
+        assert py_ver == ("pypy" if PY2 else "pypy3")
+    elif JYTHON:
+        assert py_ver == "jython"
+    else:
+        assert py_ver == "py{0}{1}".format(*sys.version_info)
     assert pytest_ver == "pytest" + pytest.__version__.replace(".", "")
